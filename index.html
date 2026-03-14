@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LightShield — Brighter Security for Darker Threats</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:    #010a03;
+  --bg2:   #020d04;
+  --bg3:   #041208;
+  --panel: rgba(0,255,65,0.04);
+  --g:     #00ff41;
+  --g2:    #00cc33;
+  --g3:    #00ff9d;
+  --gdim:  rgba(0,255,65,0.18);
+  --gbord: rgba(0,255,65,0.22);
+  --gbrd2: rgba(0,255,65,0.5);
+  --text:  #c8ffd4;
+  --muted: #3a6644;
+  --red:   #ff2251;
+  --amber: #ffaa00;
+  --mono:  'Share Tech Mono', monospace;
+  --head:  'Orbitron', sans-serif;
+  --body:  'Rajdhani', sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  overflow-x: hidden;
+  font-size: 16px;
+  cursor: crosshair;
+}
+
+/* scanlines overlay */
+body::after {
+  content:'';
+  position:fixed;inset:0;
+  background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,65,0.015) 2px,rgba(0,255,65,0.015) 4px);
+  pointer-events:none;z-index:9999;
+}
+
+/* matrix grid */
+body::before {
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(0,255,65,0.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,255,65,0.035) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;z-index:0;
+  animation: gridShift 20s linear infinite;
+}
+@keyframes gridShift {
+  0%{background-position:0 0}
+  100%{background-position:40px 40px}
+}
+
+/* ── CANVAS MATRIX ── */
+#matrix-canvas {
+  position:fixed;inset:0;
+  pointer-events:none;z-index:0;
+  opacity:0.07;
+}
+
+/* ── NAV ── */
+nav {
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 5%;
+  background:rgba(1,10,3,0.92);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--gbord);
+  font-family:var(--mono);
+}
+.logo {
+  font-family:var(--head);
+  font-size:1.1rem;font-weight:700;
+  color:var(--g);
+  text-decoration:none;
+  display:flex;align-items:center;gap:.6rem;
+  text-shadow:0 0 20px var(--g);
+  letter-spacing:.1em;
+}
+.logo-icon {
+  width:32px;height:32px;
+  border:2px solid var(--g);
+  border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.9rem;
+  animation:borderPulse 2s infinite;
+  box-shadow:0 0 12px var(--gdim);
+}
+@keyframes borderPulse {
+  0%,100%{box-shadow:0 0 8px var(--gdim)}
+  50%{box-shadow:0 0 20px rgba(0,255,65,0.4)}
+}
+.nav-links{display:flex;gap:2rem;list-style:none}
+.nav-links a {
+  color:var(--muted);text-decoration:none;font-size:.75rem;
+  letter-spacing:.08em;transition:color .2s,text-shadow .2s;
+  text-transform:uppercase;
+}
+.nav-links a:hover{color:var(--g);text-shadow:0 0 10px var(--g)}
+.nav-cta {
+  background:transparent;border:1px solid var(--g);
+  color:var(--g);padding:.45rem 1.2rem;
+  font-size:.7rem;font-weight:700;text-decoration:none;
+  font-family:var(--mono);letter-spacing:.1em;
+  transition:all .2s;
+  position:relative;overflow:hidden;
+  clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);
+}
+.nav-cta::before{
+  content:'';position:absolute;inset:0;
+  background:var(--g);transform:translateX(-101%);
+  transition:transform .2s;
+}
+.nav-cta:hover::before{transform:translateX(0)}
+.nav-cta:hover{color:var(--bg)}
+.nav-cta span{position:relative;z-index:1}
+@media(max-width:768px){.nav-links{display:none}}
+
+/* ── HERO ── */
+.hero {
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:8rem 5% 5rem;
+  position:relative;z-index:1;
+}
+
+.hero-glow {
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:900px;height:600px;
+  background:radial-gradient(ellipse,rgba(0,255,65,0.06) 0%,transparent 65%);
+  pointer-events:none;
+  animation:glowPulse 4s ease-in-out infinite;
+}
+@keyframes glowPulse{0%,100%{opacity:.6}50%{opacity:1}}
+
+.terminal-badge {
+  display:inline-flex;align-items:center;gap:.6rem;
+  border:1px solid var(--gbord);
+  background:rgba(0,255,65,0.05);
+  color:var(--g);padding:.4rem 1rem;
+  font-family:var(--mono);font-size:.72rem;
+  margin-bottom:2.5rem;letter-spacing:.05em;
+  animation:fadeIn .5s ease both;
+  clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);
+}
+.tb-cursor{width:8px;height:14px;background:var(--g);animation:blink .8s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+.hero h1 {
+  font-family:var(--head);
+  font-size:clamp(2.5rem,7vw,5.8rem);
+  font-weight:900;
+  letter-spacing:.05em;
+  line-height:1.05;
+  max-width:950px;
+  margin-bottom:1.5rem;
+  color:var(--g);
+  text-shadow:0 0 40px rgba(0,255,65,0.5),0 0 80px rgba(0,255,65,0.2);
+  animation:fadeUp .6s .1s ease both;
+}
+.hero h1 span{
+  color:var(--text);
+  text-shadow:none;
+  display:block;
+  font-size:.5em;
+  letter-spacing:.15em;
+  font-weight:400;
+  margin-bottom:.3em;
+  font-family:var(--mono);
+}
+.glitch {
+  position:relative;
+  display:inline-block;
+}
+.glitch::before,.glitch::after {
+  content:attr(data-text);
+  position:absolute;inset:0;
+  color:var(--g);
+}
+.glitch::before{
+  left:2px;
+  text-shadow:-2px 0 #ff0040;
+  animation:glitch1 3s infinite;
+  clip-path:polygon(0 0,100% 0,100% 45%,0 45%);
+}
+.glitch::after{
+  left:-2px;
+  text-shadow:2px 0 #00ffff;
+  animation:glitch2 3s infinite;
+  clip-path:polygon(0 55%,100% 55%,100% 100%,0 100%);
+}
+@keyframes glitch1{
+  0%,85%,87%,100%{transform:none;opacity:0}
+  86%{transform:translate(-3px,1px);opacity:1}
+}
+@keyframes glitch2{
+  0%,83%,86%,100%{transform:none;opacity:0}
+  84%{transform:translate(3px,-1px);opacity:1}
+}
+
+.hero-sub {
+  font-size:1.1rem;color:var(--muted);
+  max-width:520px;margin-bottom:3rem;
+  font-family:var(--mono);font-size:.85rem;
+  line-height:1.8;letter-spacing:.03em;
+  animation:fadeUp .6s .2s ease both;
+}
+.hero-sub em{color:var(--g);font-style:normal}
+
+.hero-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;animation:fadeUp .6s .3s ease both}
+.btn-g {
+  background:var(--g);color:var(--bg);
+  padding:.85rem 2rem;font-size:.85rem;font-weight:700;
+  text-decoration:none;font-family:var(--mono);
+  letter-spacing:.08em;
+  clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);
+  transition:box-shadow .2s,transform .15s;
+  text-transform:uppercase;
+}
+.btn-g:hover{box-shadow:0 0 30px rgba(0,255,65,0.5);transform:translateY(-2px)}
+.btn-ghost {
+  background:transparent;color:var(--g);
+  padding:.85rem 2rem;font-size:.85rem;font-weight:700;
+  text-decoration:none;font-family:var(--mono);
+  letter-spacing:.08em;
+  border:1px solid var(--gbord);
+  clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);
+  transition:border-color .2s,box-shadow .2s;
+  text-transform:uppercase;
+}
+.btn-ghost:hover{border-color:var(--g);box-shadow:0 0 20px rgba(0,255,65,0.2)}
+
+/* Hero terminal widget */
+.terminal {
+  margin-top:4rem;
+  border:1px solid var(--gbord);
+  border-radius:4px;
+  width:100%;max-width:480px;
+  background:rgba(0,255,65,0.03);
+  animation:fadeUp .6s .4s ease both;
+  box-shadow:0 0 40px rgba(0,255,65,0.08);
+  font-family:var(--mono);
+  text-align:left;
+}
+.term-bar {
+  background:rgba(0,255,65,0.08);
+  border-bottom:1px solid var(--gbord);
+  padding:.6rem 1rem;
+  display:flex;align-items:center;gap:.5rem;
+  font-size:.65rem;color:var(--muted);letter-spacing:.05em;
+}
+.term-dots{display:flex;gap:.4rem}
+.td{width:8px;height:8px;border-radius:50%}
+.term-body{padding:1rem;font-size:.75rem;line-height:2;min-height:160px}
+.t-line{color:var(--muted)}
+.t-ok{color:var(--g)}
+.t-warn{color:var(--amber)}
+.t-bad{color:var(--red)}
+.t-cmd{color:var(--g3)}
+.t-cursor-line::after{content:'█';animation:blink .8s step-end infinite;color:var(--g)}
+
+/* ── SECTION BASE ── */
+section{position:relative;z-index:1}
+.container{max-width:1100px;margin:0 auto}
+hr.div{border:none;border-top:1px solid var(--gbord);max-width:1100px;margin:0 auto}
+
+.sec-label {
+  font-family:var(--mono);font-size:.68rem;
+  color:var(--g);letter-spacing:.2em;
+  text-transform:uppercase;margin-bottom:.75rem;
+  display:flex;align-items:center;gap:.6rem;
+}
+.sec-label::before{content:'//';opacity:.5}
+.sec-label::after{content:'';flex:0 0 40px;height:1px;background:var(--g);opacity:.4}
+
+.sec-title {
+  font-family:var(--head);
+  font-size:clamp(1.8rem,4vw,3rem);
+  font-weight:900;letter-spacing:.04em;
+  line-height:1.1;margin-bottom:1rem;
+  color:var(--g);
+  text-shadow:0 0 30px rgba(0,255,65,0.3);
+}
+.sec-sub{color:var(--muted);font-size:.9rem;max-width:500px;margin-bottom:3rem;font-family:var(--mono);line-height:1.7}
+
+/* ── PROBLEM ── */
+.problem{background:var(--bg2);padding:6rem 5%}
+.prob-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+@media(max-width:700px){.prob-grid{grid-template-columns:1fr}}
+.prob-card {
+  border:1px solid var(--gbord);
+  padding:1.5rem;
+  background:var(--panel);
+  position:relative;overflow:hidden;
+  transition:border-color .3s,box-shadow .3s,transform .3s;
+  clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));
+}
+.prob-card::before {
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--g),transparent);
+  animation:scanLine 3s linear infinite;
+}
+@keyframes scanLine{0%{transform:scaleX(0);opacity:0}50%{transform:scaleX(1);opacity:1}100%{transform:scaleX(0);opacity:0}}
+.prob-card:hover{border-color:var(--g);box-shadow:0 0 25px rgba(0,255,65,0.12);transform:translateY(-3px)}
+.prob-num{font-family:var(--mono);font-size:.65rem;color:var(--g);margin-bottom:.75rem;letter-spacing:.12em}
+.prob-card h3{font-family:var(--head);font-size:.95rem;font-weight:700;margin-bottom:.5rem;letter-spacing:.05em;color:var(--text)}
+.prob-card p{font-size:.82rem;color:var(--muted);line-height:1.65;font-family:var(--mono)}
+.stat-bar{display:flex;align-items:center;gap:.75rem;margin-top:.85rem}
+.sbar-track{flex:1;background:rgba(0,255,65,0.07);height:4px;position:relative;overflow:hidden}
+.sbar-fill{height:100%;background:linear-gradient(90deg,var(--g2),var(--g));position:relative}
+.sbar-fill::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent);
+  animation:shimmer 2s infinite;
+}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
+.sbar-pct{font-family:var(--mono);font-size:.68rem;color:var(--g);white-space:nowrap}
+
+/* ── FEATURES ── */
+.features{padding:6rem 5%}
+.feat-tabs {
+  display:flex;justify-content:center;gap:0;
+  margin-bottom:3rem;
+  border:1px solid var(--gbord);
+  width:fit-content;margin-left:auto;margin-right:auto;
+  flex-wrap:wrap;
+}
+.feat-tab {
+  padding:.65rem 1.4rem;
+  font-size:.72rem;font-weight:700;
+  border:none;border-right:1px solid var(--gbord);
+  background:transparent;color:var(--muted);cursor:pointer;
+  font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;
+  transition:all .2s;
+}
+.feat-tab:last-child{border-right:none}
+.feat-tab:hover{background:rgba(0,255,65,0.05);color:var(--text)}
+.feat-tab.active{background:var(--g);color:var(--bg);text-shadow:none}
+
+.feat-panel{display:none;animation:fadeIn .4s ease}
+.feat-panel.active{display:block}
+
+/* two-col layout for demos */
+.demo-wrap{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;align-items:start}
+@media(max-width:800px){.demo-wrap{grid-template-columns:1fr}}
+
+/* desc side */
+.demo-desc h3{font-family:var(--head);font-size:1.5rem;font-weight:900;letter-spacing:.04em;margin-bottom:.75rem;color:var(--g);text-shadow:0 0 20px rgba(0,255,65,0.3)}
+.demo-desc p{color:var(--muted);font-size:.82rem;margin-bottom:1.5rem;font-family:var(--mono);line-height:1.8}
+.demo-desc ul{list-style:none}
+.demo-desc ul li {
+  display:flex;align-items:center;gap:.6rem;
+  padding:.45rem 0;font-size:.8rem;color:var(--muted);
+  border-bottom:1px solid rgba(0,255,65,0.06);
+  font-family:var(--mono);
+}
+.demo-desc ul li:last-child{border-bottom:none}
+.demo-desc ul li::before{content:'>';color:var(--g);font-weight:700;font-size:.85rem}
+
+/* demo panels */
+.demo-panel {
+  border:1px solid var(--gbord);
+  background:var(--panel);
+  position:relative;overflow:hidden;
+}
+.demo-panel::after {
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,transparent 0%,rgba(0,255,65,0.02) 100%);
+  pointer-events:none;
+}
+.dp-header {
+  border-bottom:1px solid var(--gbord);
+  padding:.7rem 1rem;
+  display:flex;justify-content:space-between;align-items:center;
+  background:rgba(0,255,65,0.04);
+}
+.dp-title{font-family:var(--mono);font-size:.65rem;color:var(--g);letter-spacing:.1em}
+.dp-live{display:flex;align-items:center;gap:.35rem;font-family:var(--mono);font-size:.62rem;color:var(--g)}
+.dp-dot{width:5px;height:5px;background:var(--g);border-radius:50%;animation:blink 1.2s infinite;box-shadow:0 0 6px var(--g)}
+
+/* ── RISK SCORE DEMO ── */
+.risk-demo{padding:1.25rem}
+.risk-ring-wrap{text-align:center;margin-bottom:1.25rem}
+.risk-ring-wrap svg{width:140px;height:140px}
+.ring-track{fill:none;stroke:rgba(0,255,65,0.08);stroke-width:8}
+.ring-fill{fill:none;stroke:var(--g);stroke-width:8;stroke-linecap:butt;stroke-dasharray:408;stroke-dashoffset:65;transition:stroke-dashoffset 1s ease;filter:drop-shadow(0 0 6px var(--g))}
+.ring-score{fill:var(--g);font-family:'Orbitron',sans-serif;font-size:1.6rem;font-weight:900;dominant-baseline:middle;text-anchor:middle}
+.ring-label{fill:var(--muted);font-family:'Share Tech Mono',monospace;font-size:.55rem;dominant-baseline:middle;text-anchor:middle;letter-spacing:.1em}
+.sliders{display:flex;flex-direction:column;gap:.9rem;margin-bottom:1rem}
+.sl-row{display:flex;flex-direction:column;gap:.3rem}
+.sl-top{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.7rem}
+.sl-top span:first-child{color:var(--muted)}
+.sl-top .sv{color:var(--g)}
+input[type=range]{width:100%;accent-color:var(--g);cursor:pointer;height:3px}
+.risk-verdict{
+  font-family:var(--mono);font-size:.75rem;font-weight:700;
+  padding:.7rem;text-align:center;letter-spacing:.05em;
+  transition:all .3s;border:1px solid;
+}
+.rv-good{background:rgba(0,255,65,0.08);border-color:rgba(0,255,65,0.3);color:var(--g)}
+.rv-mid{background:rgba(255,170,0,0.08);border-color:rgba(255,170,0,0.3);color:var(--amber)}
+.rv-bad{background:rgba(255,34,81,0.08);border-color:rgba(255,34,81,0.3);color:var(--red)}
+
+/* ── THREAT FEED ── */
+#threat-list{min-height:260px;padding:.5rem}
+.ti{
+  display:flex;align-items:center;gap:.65rem;
+  padding:.55rem .75rem;margin-bottom:.3rem;
+  border:1px solid rgba(0,255,65,0.07);
+  transition:border-color .2s;font-family:var(--mono);
+  animation:slideDown .3s ease;
+}
+@keyframes slideDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.ti:hover{border-color:var(--gbord)}
+.ti-ico{font-size:.9rem;width:22px;text-align:center;flex-shrink:0}
+.ti-msg{flex:1;font-size:.72rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ti-src{font-size:.62rem;color:var(--muted)}
+.severity{font-size:.6rem;font-weight:700;padding:.15rem .5rem;letter-spacing:.08em}
+.sv-h{background:rgba(255,34,81,0.12);color:var(--red);border:1px solid rgba(255,34,81,0.25)}
+.sv-m{background:rgba(255,170,0,0.1);color:var(--amber);border:1px solid rgba(255,170,0,0.25)}
+.sv-l{background:rgba(0,255,65,0.08);color:var(--g);border:1px solid rgba(0,255,65,0.2)}
+.ti-t{font-size:.62rem;color:var(--muted);flex-shrink:0}
+.feed-footer{border-top:1px solid var(--gbord);padding:.65rem 1rem;display:flex;justify-content:space-between;align-items:center}
+.ff-s{font-family:var(--mono);font-size:.62rem;color:var(--muted)}
+.ff-s b{color:var(--g)}
+.pause-btn{font-family:var(--mono);font-size:.65rem;background:transparent;border:1px solid var(--gbord);color:var(--g);padding:.3rem .75rem;cursor:pointer;transition:all .2s;letter-spacing:.05em}
+.pause-btn:hover{background:rgba(0,255,65,0.08)}
+
+/* ── GAME DEMO ── */
+.game-wrap{padding:1.25rem}
+.g-profile{display:flex;align-items:center;gap:.85rem;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid var(--gbord)}
+.g-avatar{width:48px;height:48px;border:2px solid var(--g);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;box-shadow:0 0 12px rgba(0,255,65,0.25);clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))}
+.g-info h4{font-family:var(--head);font-size:.9rem;font-weight:700;color:var(--g);margin-bottom:.1rem;letter-spacing:.05em}
+.g-info p{font-family:var(--mono);font-size:.62rem;color:var(--muted)}
+.g-level{margin-left:auto;border:1px solid var(--g);padding:.4rem .65rem;text-align:center;box-shadow:0 0 10px rgba(0,255,65,0.15)}
+.g-level span:first-child{display:block;font-family:var(--mono);font-size:.55rem;color:var(--muted);letter-spacing:.1em}
+.g-level span:last-child{font-family:var(--head);font-size:1.1rem;font-weight:900;color:var(--g)}
+.xp-wrap{margin-bottom:1.25rem}
+.xp-top{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.68rem;margin-bottom:.4rem}
+.xp-top span:first-child{color:var(--muted)}
+.xp-top span:last-child{color:var(--g)}
+.xp-track{background:rgba(0,255,65,0.06);height:6px;position:relative;overflow:hidden}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--g2),var(--g3));width:68%;transition:width .8s ease;position:relative}
+.xp-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.5),transparent);animation:shimmer 1.5s infinite}
+.challenges{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1rem}
+.ch{display:flex;align-items:center;gap:.75rem;padding:.75rem;border:1px solid rgba(0,255,65,0.07);cursor:pointer;transition:border-color .2s,background .2s}
+.ch:hover{border-color:var(--gbord);background:rgba(0,255,65,0.03)}
+.ch-ico{font-size:1rem;width:28px;text-align:center;flex-shrink:0}
+.ch-body{flex:1;min-width:0}
+.ch-title{font-family:var(--mono);font-size:.7rem;color:var(--text);margin-bottom:.25rem}
+.ch-prog{display:flex;align-items:center;gap:.5rem}
+.ch-track{flex:1;background:rgba(0,255,65,0.06);height:3px;overflow:hidden}
+.ch-fill{height:100%;background:var(--g);transition:width .6s ease}
+.ch-pct{font-family:var(--mono);font-size:.6rem;color:var(--muted)}
+.ch-xp{font-family:var(--mono);font-size:.65rem;color:var(--amber);white-space:nowrap}
+.ch-done{color:var(--g);font-size:.85rem}
+.achs{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.85rem}
+.ach{width:34px;height:34px;border:1px solid rgba(0,255,65,0.15);display:flex;align-items:center;justify-content:center;font-size:.95rem;transition:all .2s;cursor:default}
+.ach:hover{border-color:var(--g);box-shadow:0 0 10px rgba(0,255,65,0.2);transform:scale(1.1)}
+.ach.locked{filter:grayscale(1);opacity:.3}
+.streak-row{display:flex;justify-content:space-between;align-items:center;padding-top:.85rem;border-top:1px solid var(--gbord)}
+.streak-row h4{font-family:var(--head);font-size:.78rem;color:var(--text);margin-bottom:.1rem}
+.streak-row p{font-family:var(--mono);font-size:.62rem;color:var(--muted)}
+.streak-num{font-family:var(--head);font-size:2rem;font-weight:900;color:var(--amber);text-shadow:0 0 15px rgba(255,170,0,0.4)}
+
+/* ── FAMILY DEMO ── */
+.family-ui{border:1px solid var(--gbord);background:var(--panel);overflow:hidden}
+.fam-header{padding:.7rem 1rem;border-bottom:1px solid var(--gbord);background:rgba(0,255,65,0.04);display:flex;justify-content:space-between;align-items:center}
+.fh-title{font-family:var(--mono);font-size:.65rem;color:var(--g);letter-spacing:.1em}
+.fh-count{font-family:var(--mono);font-size:.62rem;color:var(--muted)}
+.fam-members{padding:.6rem}
+.mem{display:flex;align-items:center;gap:.75rem;padding:.65rem .75rem;border:1px solid transparent;cursor:pointer;margin-bottom:.35rem;transition:all .2s}
+.mem:hover{border-color:var(--gbord);background:rgba(0,255,65,0.03)}
+.mem.sel{border-color:var(--g);background:rgba(0,255,65,0.05);box-shadow:0 0 12px rgba(0,255,65,0.08)}
+.m-ava{width:36px;height:36px;border:1px solid rgba(0,255,65,0.2);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.m-info{flex:1;min-width:0}
+.m-name{font-family:var(--head);font-size:.75rem;font-weight:700;color:var(--text)}
+.m-status{font-family:var(--mono);font-size:.62rem;color:var(--muted)}
+.m-score{text-align:right}
+.m-num{font-family:var(--head);font-size:1.1rem;font-weight:900}
+.m-lbl{font-family:var(--mono);font-size:.58rem;color:var(--muted);letter-spacing:.05em}
+.sc-hi{color:var(--g);text-shadow:0 0 10px rgba(0,255,65,0.4)}
+.sc-mi{color:var(--amber);text-shadow:0 0 10px rgba(255,170,0,0.3)}
+.sc-lo{color:var(--red);text-shadow:0 0 10px rgba(255,34,81,0.3)}
+.mem-detail{padding:.85rem 1rem;border-top:1px solid var(--gbord);background:rgba(0,0,0,0.2)}
+.md-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+.md-name{font-family:var(--head);font-size:.75rem;color:var(--g);letter-spacing:.05em}
+.md-btns{display:flex;gap:.35rem}
+.md-btn{font-family:var(--mono);font-size:.6rem;background:transparent;border:1px solid var(--gbord);color:var(--g);padding:.25rem .6rem;cursor:pointer;transition:all .2s;letter-spacing:.05em}
+.md-btn:hover{background:rgba(0,255,65,0.08)}
+.md-risks{display:flex;flex-direction:column;gap:.4rem}
+.mdr{display:flex;align-items:center;gap:.6rem;font-family:var(--mono);font-size:.7rem}
+.mdr-ico{width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0}
+.mdr-t{flex:1;color:var(--muted)}
+.mdr-v{font-weight:700}
+
+/* ── MARKET ── */
+.market{background:var(--bg2);padding:6rem 5%}
+.mstats{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem}
+@media(max-width:700px){.mstats{grid-template-columns:1fr}}
+.mstat {
+  border:1px solid var(--gbord);padding:2rem;text-align:center;
+  background:var(--panel);
+  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));
+  transition:box-shadow .3s,border-color .3s;
+  position:relative;overflow:hidden;
+}
+.mstat::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at top,rgba(0,255,65,0.05),transparent 70%);
+}
+.mstat:hover{border-color:var(--g);box-shadow:0 0 30px rgba(0,255,65,0.1)}
+.mstat-num{
+  font-family:var(--head);font-size:3rem;font-weight:900;
+  color:var(--g);text-shadow:0 0 20px rgba(0,255,65,0.5);
+  margin-bottom:.3rem;
+}
+.mstat-lbl{font-family:var(--mono);font-size:.7rem;color:var(--muted);line-height:1.6}
+
+/* ── TEAM ── */
+.team{padding:6rem 5%}
+.team-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-top:3rem}
+@media(max-width:900px){.team-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:500px){.team-grid{grid-template-columns:1fr}}
+.tc{
+  border:1px solid var(--gbord);padding:1.5rem;text-align:center;
+  background:var(--panel);
+  transition:border-color .3s,box-shadow .3s,transform .3s;
+  clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%);
+}
+.tc:hover{border-color:var(--g);box-shadow:0 0 25px rgba(0,255,65,0.1);transform:translateY(-4px)}
+.tc-ava{width:56px;height:56px;border:1px solid var(--gbord);margin:0 auto 1rem;display:flex;align-items:center;justify-content:center;font-size:1.4rem;transition:border-color .3s}
+.tc:hover .tc-ava{border-color:var(--g);box-shadow:0 0 12px rgba(0,255,65,0.2)}
+.tc-ava-wrap{position:relative;width:80px;height:80px;margin:0 auto 1rem}
+.tc-svg{width:80px;height:80px;display:block;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));transition:filter .3s}
+.tc:hover .tc-svg{filter:drop-shadow(0 0 8px rgba(0,255,65,0.5))}
+.tc-ava-ring{position:absolute;inset:-3px;border:1px solid rgba(0,255,65,0.25);clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));pointer-events:none;transition:all .3s}
+.tc:hover .tc-ava-ring{border-color:var(--g);box-shadow:0 0 14px rgba(0,255,65,0.3)}
+.tc h4{font-family:var(--head);font-size:.85rem;font-weight:700;margin-bottom:.35rem;color:var(--text);letter-spacing:.03em}
+.tc-role{font-family:var(--mono);font-size:.65rem;color:var(--g);border:1px solid var(--gbord);padding:.2rem .6rem;display:inline-block}
+
+/* ── CTA ── */
+.cta{padding:7rem 5%;text-align:center}
+.cta h2{font-family:var(--head);font-size:clamp(1.8rem,4.5vw,3.2rem);font-weight:900;letter-spacing:.05em;color:var(--g);text-shadow:0 0 40px rgba(0,255,65,0.3);margin-bottom:1rem}
+.cta p{color:var(--muted);font-size:.82rem;max-width:460px;margin:0 auto 2.5rem;font-family:var(--mono);line-height:1.8}
+.email-form{display:flex;gap:0;max-width:420px;margin:0 auto;border:1px solid var(--gbord)}
+.email-form input{flex:1;background:rgba(0,255,65,0.03);border:none;border-right:1px solid var(--gbord);color:var(--text);padding:.85rem 1rem;font-size:.82rem;font-family:var(--mono);outline:none;transition:background .2s}
+.email-form input::placeholder{color:var(--muted)}
+.email-form input:focus{background:rgba(0,255,65,0.05)}
+.email-form button{background:var(--g);color:var(--bg);border:none;padding:.85rem 1.4rem;font-size:.82rem;font-weight:700;cursor:pointer;font-family:var(--mono);letter-spacing:.08em;transition:box-shadow .2s}
+.email-form button:hover{box-shadow:0 0 20px rgba(0,255,65,0.4)}
+.success-pill{display:none;font-family:var(--mono);font-size:.8rem;color:var(--g);border:1px solid var(--gbord);padding:.75rem 2rem;margin-top:1rem;letter-spacing:.05em}
+.success-pill.show{display:inline-block}
+
+/* ── FOOTER ── */
+footer{
+  background:var(--bg2);border-top:1px solid var(--gbord);
+  padding:1.75rem 5%;display:flex;justify-content:space-between;
+  align-items:center;flex-wrap:wrap;gap:1rem;
+  position:relative;z-index:1;
+}
+.fl{font-family:var(--head);font-size:.95rem;color:var(--g);font-weight:700;text-shadow:0 0 12px rgba(0,255,65,0.3);letter-spacing:.08em}
+footer p{color:var(--muted);font-size:.7rem;font-family:var(--mono)}
+.flinks{display:flex;gap:1.5rem;list-style:none}
+.flinks a{color:var(--muted);text-decoration:none;font-size:.7rem;font-family:var(--mono);transition:color .2s;letter-spacing:.05em}
+.flinks a:hover{color:var(--g)}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* utils */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- MATRIX CANVAS -->
+<canvas id="matrix-canvas"></canvas>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">
+    <div class="logo-icon">⛨</div>
+    LIGHTSHIELD
+  </a>
+  <ul class="nav-links">
+    <li><a href="#problem">THREAT.MAP</a></li>
+    <li><a href="#features">MODULES</a></li>
+    <li><a href="#market">INTEL</a></li>
+    <li><a href="#team">OPERATORS</a></li>
+  </ul>
+  <a href="#contact" class="nav-cta"><span>INIT_ACCESS</span></a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="terminal-badge"><div class="tb-cursor"></div>SYSTEM ONLINE · v2.6.1 · THREAT LEVEL: ACTIVE</div>
+
+  <h1>
+    <span>// INITIALIZING PROTECTION</span>
+    <span class="glitch" data-text="LIGHTSHIELD">LIGHTSHIELD</span>
+  </h1>
+
+  <p class="hero-sub">
+    <em>Brighter Security for Darker Threats.</em><br>
+    Your AI-powered personal cybersecurity coach.<br>
+    Protecting <em>humans</em> — not just devices.
+  </p>
+
+  <div class="hero-btns">
+    <a href="#contact" class="btn-g">▶ GET_EARLY_ACCESS</a>
+    <a href="#features" class="btn-ghost">◈ VIEW_MODULES</a>
+  </div>
+
+  <!-- Terminal widget -->
+  <div class="terminal">
+    <div class="term-bar">
+      <div class="term-dots">
+        <div class="td" style="background:#ff5f57"></div>
+        <div class="td" style="background:#febc2e"></div>
+        <div class="td" style="background:#28c840"></div>
+      </div>
+      <span>lightshield@security ~ bash</span>
+    </div>
+    <div class="term-body" id="terminal-body"></div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- PROBLEM -->
+<section class="problem" id="problem">
+  <div class="container">
+    <p class="sec-label reveal">THREAT.ANALYSIS</p>
+    <h2 class="sec-title reveal">ONE_CLICK.CAN<br>CHANGE_EVERYTHING</h2>
+    <p class="sec-sub reveal">Human error is the #1 attack vector. Cybercriminals don't break in — they walk through doors humans leave open.</p>
+    <div class="prob-grid">
+      <div class="prob-card reveal">
+        <div class="prob-num">ERROR_01</div>
+        <h3>HUMAN_ERROR_DOMINATES</h3>
+        <p>80%+ of cyber breaches originate from human mistakes. You are the target. You are also the solution.</p>
+        <div class="stat-bar"><div class="sbar-track"><div class="sbar-fill" style="width:80%"></div></div><span class="sbar-pct">80%</span></div>
+      </div>
+      <div class="prob-card reveal" style="transition-delay:.1s">
+        <div class="prob-num">ERROR_02</div>
+        <h3>DAILY_PHISHING_WAVES</h3>
+        <p>3.4 billion phishing emails sent every day. One convincing link is all it takes to compromise your entire life.</p>
+        <div class="stat-bar"><div class="sbar-track"><div class="sbar-fill" style="width:65%"></div></div><span class="sbar-pct">3.4B/day</span></div>
+      </div>
+      <div class="prob-card reveal" style="transition-delay:.2s">
+        <div class="prob-num">ERROR_03</div>
+        <h3>WEAK_AUTH_PATTERNS</h3>
+        <p>72% of users reuse passwords. Lack of 2FA makes accounts trivially compromisable by automated attacks.</p>
+        <div class="stat-bar"><div class="sbar-track"><div class="sbar-fill" style="width:72%"></div></div><span class="sbar-pct">72% at risk</span></div>
+      </div>
+      <div class="prob-card reveal" style="transition-delay:.3s">
+        <div class="prob-num">ERROR_04</div>
+        <h3>ZERO_FAMILY_VISIBILITY</h3>
+        <p>Parents have no real-time visibility into their family's digital exposure. Kids get online younger than ever.</p>
+        <div class="stat-bar"><div class="sbar-track"><div class="sbar-fill" style="width:90%"></div></div><span class="sbar-pct">90% blind</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:2.5rem">
+      <p class="sec-label reveal" style="justify-content:center">PROTECTION.MODULES</p>
+      <h2 class="sec-title reveal">FOUR_SHIELDS.ACTIVE</h2>
+      <p class="sec-sub reveal" style="margin:0 auto">AI-powered protection across every dimension of your digital life. Interactive demos below — click to explore.</p>
+    </div>
+
+    <div class="feat-tabs">
+      <button class="feat-tab active" onclick="switchTab('risk',this)">◈ RISK_SCORE</button>
+      <button class="feat-tab" onclick="switchTab('threats',this)">⚡ ALERTS</button>
+      <button class="feat-tab" onclick="switchTab('game',this)">▶ GAMIFIED</button>
+      <button class="feat-tab" onclick="switchTab('family',this)">⛨ FAMILY</button>
+    </div>
+
+    <!-- RISK SCORE PANEL -->
+    <div class="feat-panel active" id="panel-risk">
+      <div class="demo-wrap">
+        <div class="demo-desc">
+          <p class="sec-label">MODULE_01</p>
+          <h3>HUMAN_RISK_SCORE</h3>
+          <p>Your personal security fingerprint. LightShield's AI continuously evaluates your digital behaviour and produces a score from 0–100 with actionable fixes.</p>
+          <ul>
+            <li>AI-powered behavioural analysis</li>
+            <li>Real-time score recalculation</li>
+            <li>Password strength auditing</li>
+            <li>Phishing click-rate tracking</li>
+            <li>Personalised improvement plan</li>
+          </ul>
+        </div>
+        <div class="demo-panel">
+          <div class="dp-header">
+            <span class="dp-title">RISK_ANALYSIS.EXE</span>
+            <div class="dp-live"><div class="dp-dot"></div>COMPUTING</div>
+          </div>
+          <div class="risk-demo">
+            <div class="risk-ring-wrap">
+              <svg viewBox="0 0 140 140">
+                <circle class="ring-track" cx="70" cy="70" r="65"/>
+                <circle class="ring-fill" cx="70" cy="70" r="65" transform="rotate(-90 70 70)" id="risk-ring"/>
+                <text class="ring-score" x="70" y="66" id="risk-num">92</text>
+                <text class="ring-label" x="70" y="84" id="ring-lbl">SECURE</text>
+              </svg>
+            </div>
+            <div class="sliders">
+              <div class="sl-row"><div class="sl-top"><span>PASSWORD_STRENGTH</span><span class="sv" id="sv1">90%</span></div><input type="range" id="s1" min="0" max="100" value="90" oninput="updateRisk()"></div>
+              <div class="sl-row"><div class="sl-top"><span>PHISHING_RESISTANCE</span><span class="sv" id="sv2">85%</span></div><input type="range" id="s2" min="0" max="100" value="85" oninput="updateRisk()"></div>
+              <div class="sl-row"><div class="sl-top"><span>2FA_COVERAGE</span><span class="sv" id="sv3">100%</span></div><input type="range" id="s3" min="0" max="100" value="100" oninput="updateRisk()"></div>
+              <div class="sl-row"><div class="sl-top"><span>DATA_PRIVACY</span><span class="sv" id="sv4">75%</span></div><input type="range" id="s4" min="0" max="100" value="75" oninput="updateRisk()"></div>
+            </div>
+            <div class="risk-verdict rv-good" id="risk-verdict">[ STATUS: WELL PROTECTED — MAINTAIN PROTOCOL ]</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- THREATS PANEL -->
+    <div class="feat-panel" id="panel-threats">
+      <div class="demo-wrap">
+        <div class="demo-desc">
+          <p class="sec-label">MODULE_02</p>
+          <h3>REALTIME_THREATS</h3>
+          <p>LightShield constantly scans your digital environment and fires instant alerts the moment a threat signature is detected — before damage occurs.</p>
+          <ul>
+            <li>Live phishing link interception</li>
+            <li>Dark web breach monitoring</li>
+            <li>Suspicious session detection</li>
+            <li>Malicious attachment scanner</li>
+            <li>SMS & push notification alerts</li>
+          </ul>
+        </div>
+        <div class="demo-panel">
+          <div class="dp-header">
+            <span class="dp-title">THREAT_FEED.LIVE</span>
+            <div class="dp-live"><div class="dp-dot"></div>SCANNING</div>
+          </div>
+          <div id="threat-list"></div>
+          <div class="feed-footer">
+            <span class="ff-s">BLOCKED: <b id="blocked">0</b></span>
+            <span class="ff-s">DETECTED: <b id="detected">0</b></span>
+            <button class="pause-btn" id="pbtn" onclick="toggleFeed()">⏸ PAUSE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME PANEL -->
+    <div class="feat-panel" id="panel-game">
+      <div class="demo-wrap">
+        <div class="demo-desc">
+          <p class="sec-label">MODULE_03</p>
+          <h3>GAMIFIED_HABITS</h3>
+          <p>Security doesn't have to be boring. LightShield converts good digital hygiene into daily missions, XP streaks, and achievements that keep you sharp.</p>
+          <ul>
+            <li>Daily security missions</li>
+            <li>XP points & level progression</li>
+            <li>Streak rewards for consistency</li>
+            <li>Achievement badges to unlock</li>
+            <li>Family & friends leaderboard</li>
+          </ul>
+        </div>
+        <div class="demo-panel">
+          <div class="dp-header">
+            <span class="dp-title">AGENT_PROFILE.EXE</span>
+            <div class="dp-live"><div class="dp-dot"></div>ACTIVE</div>
+          </div>
+          <div class="game-wrap">
+            <div class="g-profile">
+              <div class="g-avatar">⛨</div>
+              <div class="g-info"><h4>SECURITY_GUARDIAN</h4><p>RANK: GUARDIAN · 2,840 XP TOTAL</p></div>
+              <div class="g-level"><span>LEVEL</span><span>12</span></div>
+            </div>
+            <div class="xp-wrap">
+              <div class="xp-top"><span>XP_TO_LEVEL_13</span><span>2,840 / 3,500</span></div>
+              <div class="xp-track"><div class="xp-fill"></div></div>
+            </div>
+            <div class="challenges">
+              <div class="ch" onclick="completeChallenge(this,0)">
+                <div class="ch-ico">🔐</div>
+                <div class="ch-body"><div class="ch-title">ENABLE_2FA on 3 accounts</div><div class="ch-prog"><div class="ch-track"><div class="ch-fill" style="width:66%" id="c0"></div></div><span class="ch-pct" id="c0p">2/3</span></div></div>
+                <span class="ch-xp">+120XP</span>
+              </div>
+              <div class="ch" onclick="completeChallenge(this,1)">
+                <div class="ch-ico">🎣</div>
+                <div class="ch-body"><div class="ch-title">COMPLETE phishing quiz</div><div class="ch-prog"><div class="ch-track"><div class="ch-fill" style="width:100%" id="c1"></div></div><span class="ch-pct" id="c1p">✓</span></div></div>
+                <span class="ch-done">✓</span>
+              </div>
+              <div class="ch" onclick="completeChallenge(this,2)">
+                <div class="ch-ico">🔑</div>
+                <div class="ch-body"><div class="ch-title">UPDATE 5 weak passwords</div><div class="ch-prog"><div class="ch-track"><div class="ch-fill" style="width:40%" id="c2"></div></div><span class="ch-pct" id="c2p">2/5</span></div></div>
+                <span class="ch-xp">+200XP</span>
+              </div>
+              <div class="ch" onclick="completeChallenge(this,3)">
+                <div class="ch-ico">🌐</div>
+                <div class="ch-body"><div class="ch-title">AUDIT app permissions</div><div class="ch-prog"><div class="ch-track"><div class="ch-fill" style="width:0%" id="c3"></div></div><span class="ch-pct" id="c3p">0/8</span></div></div>
+                <span class="ch-xp">+300XP</span>
+              </div>
+            </div>
+            <div style="margin-bottom:.75rem">
+              <div style="font-family:var(--mono);font-size:.62rem;color:var(--muted);margin-bottom:.45rem;letter-spacing:.08em">ACHIEVEMENT_BADGES</div>
+              <div class="achs">
+                <div class="ach" title="First Login">⛨</div>
+                <div class="ach" title="Password Master">🔐</div>
+                <div class="ach" title="Phishing Fighter">🎣</div>
+                <div class="ach" title="7-Day Streak">🔥</div>
+                <div class="ach" title="Family Guardian">👨‍👩‍👧</div>
+                <div class="ach locked">🏆</div>
+                <div class="ach locked">⭐</div>
+                <div class="ach locked">💎</div>
+              </div>
+            </div>
+            <div class="streak-row">
+              <div><h4>🔥 CURRENT_STREAK</h4><p>Daily security check-ins maintained</p></div>
+              <div style="text-align:center"><div class="streak-num">14</div><div style="font-family:var(--mono);font-size:.58rem;color:var(--muted)">DAYS</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAMILY PANEL -->
+    <div class="feat-panel" id="panel-family">
+      <div class="demo-wrap">
+        <div class="demo-desc">
+          <p class="sec-label">MODULE_04</p>
+          <h3>FAMILY_MONITOR</h3>
+          <p>Unified family protection dashboard. Track every member's security posture in real-time, get alerts when they're exposed, and guide them to safety.</p>
+          <ul>
+            <li>Real-time score per member</li>
+            <li>Parental alerts for risky behaviour</li>
+            <li>Safe browsing enforcement for kids</li>
+            <li>Privacy-first — no surveillance</li>
+            <li>Shared family security goals</li>
+          </ul>
+        </div>
+        <div class="family-ui">
+          <div class="fam-header">
+            <span class="fh-title">FAMILY_SECURITY_HUB</span>
+            <span class="fh-count">4 AGENTS TRACKED</span>
+          </div>
+          <div class="fam-members">
+            <div class="mem sel" onclick="selectMember(this,0)">
+              <div class="m-ava">👨</div>
+              <div class="m-info"><div class="m-name">AHMED [ADMIN]</div><div class="m-status">ONLINE · last_active: NOW</div></div>
+              <div class="m-score"><div class="m-num sc-hi">92</div><div class="m-lbl">SECURE</div></div>
+            </div>
+            <div class="mem" onclick="selectMember(this,1)">
+              <div class="m-ava">👩</div>
+              <div class="m-info"><div class="m-name">SARA [MEMBER]</div><div class="m-status">OFFLINE · 2hr ago</div></div>
+              <div class="m-score"><div class="m-num sc-mi">74</div><div class="m-lbl">FAIR</div></div>
+            </div>
+            <div class="mem" onclick="selectMember(this,2)">
+              <div class="m-ava">👦</div>
+              <div class="m-info"><div class="m-name">OMAR [CHILD·14]</div><div class="m-status">⚠ ONLINE · HIGH RISK</div></div>
+              <div class="m-score"><div class="m-num sc-lo">41</div><div class="m-lbl">AT_RISK</div></div>
+            </div>
+            <div class="mem" onclick="selectMember(this,3)">
+              <div class="m-ava">👧</div>
+              <div class="m-info"><div class="m-name">NOUR [CHILD·10]</div><div class="m-status">OFFLINE · 1hr ago</div></div>
+              <div class="m-score"><div class="m-num sc-hi">88</div><div class="m-lbl">SAFE</div></div>
+            </div>
+          </div>
+          <div class="mem-detail">
+            <div class="md-hdr">
+              <span class="md-name" id="md-name">AHMED_SECURITY_DETAIL</span>
+              <div class="md-btns"><button class="md-btn">ALERT</button><button class="md-btn">TIPS</button></div>
+            </div>
+            <div class="md-risks" id="md-risks"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- MARKET -->
+<section class="market" id="market">
+  <div class="container">
+    <p class="sec-label reveal">MARKET.INTELLIGENCE</p>
+    <h2 class="sec-title reveal">THREAT_LANDSCAPE:<br>MASSIVE_&_GROWING</h2>
+    <p class="sec-sub reveal">The cybersecurity consumer sector is exploding. Every person online is a potential target — and a potential customer.</p>
+    <div class="mstats">
+      <div class="mstat reveal"><div class="mstat-num">$50B+</div><div class="mstat-lbl">Global consumer cybersecurity market by 2028</div></div>
+      <div class="mstat reveal" style="transition-delay:.1s"><div class="mstat-num">4.9B</div><div class="mstat-lbl">Internet users worldwide — all potential users</div></div>
+      <div class="mstat reveal" style="transition-delay:.2s"><div class="mstat-num">80%</div><div class="mstat-lbl">Breaches caused by human error — our exact focus</div></div>
+    </div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- TEAM -->
+<section class="team" id="team">
+  <div class="container">
+    <p class="sec-label reveal">OPERATOR.PROFILES</p>
+    <h2 class="sec-title reveal">MEET_THE_TEAM</h2>
+    <p class="sec-sub reveal">Cybersecurity experts, AI engineers, and product builders on a mission to make the internet safer for every human.</p>
+    <div class="team-grid">
+      <!-- Mohamed Elsayed -->
+      <div class="tc reveal">
+        <div class="tc-ava-wrap">
+          <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" class="tc-svg">
+            <rect width="80" height="80" fill="#010a03"/>
+            <rect x="1" y="1" width="78" height="78" fill="none" stroke="#00ff41" stroke-width="1" opacity="0.4"/>
+            <!-- body -->
+            <rect x="20" y="54" width="40" height="26" rx="4" fill="#021a06"/>
+            <rect x="20" y="54" width="40" height="26" rx="4" fill="none" stroke="#00ff41" stroke-width="0.8" opacity="0.5"/>
+            <!-- neck -->
+            <rect x="33" y="46" width="14" height="12" rx="2" fill="#1a3a1e"/>
+            <!-- head -->
+            <ellipse cx="40" cy="34" rx="16" ry="18" fill="#1a3a1e"/>
+            <ellipse cx="40" cy="34" rx="16" ry="18" fill="none" stroke="#00ff41" stroke-width="0.8" opacity="0.5"/>
+            <!-- hair -->
+            <ellipse cx="40" cy="18" rx="16" ry="7" fill="#021a06"/>
+            <rect x="24" y="15" width="32" height="8" fill="#021a06"/>
+            <!-- eyes -->
+            <ellipse cx="33" cy="32" rx="3" ry="3.5" fill="#010a03"/>
+            <ellipse cx="47" cy="32" rx="3" ry="3.5" fill="#010a03"/>
+            <ellipse cx="33" cy="32" rx="1.5" ry="1.8" fill="#00ff41" opacity="0.9"/>
+            <ellipse cx="47" cy="32" rx="1.5" ry="1.8" fill="#00ff41" opacity="0.9"/>
+            <!-- eyebrows -->
+            <rect x="29" y="27" width="8" height="1.5" rx="1" fill="#00ff41" opacity="0.6"/>
+            <rect x="43" y="27" width="8" height="1.5" rx="1" fill="#00ff41" opacity="0.6"/>
+            <!-- nose -->
+            <path d="M39 36 Q40 40 41 36" stroke="#00cc33" stroke-width="1" fill="none" opacity="0.6"/>
+            <!-- mouth -->
+            <path d="M35 43 Q40 47 45 43" stroke="#00ff41" stroke-width="1.2" fill="none" opacity="0.7"/>
+            <!-- ear -->
+            <ellipse cx="24" cy="34" rx="3" ry="4" fill="#1a3a1e" stroke="#00ff41" stroke-width="0.6" opacity="0.5"/>
+            <ellipse cx="56" cy="34" rx="3" ry="4" fill="#1a3a1e" stroke="#00ff41" stroke-width="0.6" opacity="0.5"/>
+            <!-- shirt collar -->
+            <path d="M28 56 L40 64 L52 56" stroke="#00ff41" stroke-width="1" fill="none" opacity="0.5"/>
+            <!-- scanline effect -->
+            <rect width="80" height="80" fill="url(#scan1)" opacity="0.06"/>
+            <defs>
+              <pattern id="scan1" width="1" height="3" patternUnits="userSpaceOnUse">
+                <rect width="1" height="1" fill="#00ff41"/>
+              </pattern>
+            </defs>
+            <!-- glow overlay -->
+            <ellipse cx="40" cy="34" rx="16" ry="18" fill="none" stroke="#00ff41" stroke-width="2" opacity="0.08"/>
+          </svg>
+          <div class="tc-ava-ring"></div>
+        </div>
+        <h4>MOHAMED ELSAYED</h4>
+        <div class="tc-role">CEO</div>
+      </div>
+
+      <!-- Omar Hesham -->
+      <div class="tc reveal" style="transition-delay:.1s">
+        <div class="tc-ava-wrap">
+          <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" class="tc-svg">
+            <rect width="80" height="80" fill="#010a03"/>
+            <rect x="1" y="1" width="78" height="78" fill="none" stroke="#00ff41" stroke-width="1" opacity="0.4"/>
+            <!-- body -->
+            <rect x="18" y="53" width="44" height="27" rx="4" fill="#021a06"/>
+            <rect x="18" y="53" width="44" height="27" rx="4" fill="none" stroke="#00ff41" stroke-width="0.8" opacity="0.5"/>
+            <!-- neck -->
+            <rect x="33" y="45" width="14" height="12" rx="2" fill="#1e3a22"/>
+            <!-- head - slightly wider/shorter = different face shape -->
+            <ellipse cx="40" cy="33" rx="17" ry="16" fill="#1e3a22"/>
+            <ellipse cx="40" cy="33" rx="17" ry="16" fill="none" stroke="#00ff41" stroke-width="0.8" opacity="0.5"/>
+            <!-- short hair / fade -->
+            <ellipse cx="40" cy="18" rx="17" ry="6" fill="#021a06"/>
+            <rect x="23" y="15" width="34" height="9" fill="#021a06"/>
+            <!-- beard hint -->
+            <ellipse cx="40" cy="44" rx="10" ry="4" fill="#152a18" opacity="0.7"/>
+            <!-- eyes - wider apart -->
+            <ellipse cx="32" cy="31" rx="3.2" ry="3" fill="#010a03"/>
+            <ellipse cx="48" cy="31" rx="3.2" ry="3" fill="#010a03"/>
+            <ellipse cx="32" cy="31" rx="1.6" ry="1.5" fill="#00ff9d" opacity="0.9"/>
+            <ellipse cx="48" cy="31" rx="1.6" ry="1.5" fill="#00ff9d" opacity="0.9"/>
+            <!-- glasses frame -->
+            <rect x="27" y="27.5" width="10" height="7" rx="2" fill="none" stroke="#00ff41" stroke-width="1" opacity="0.7"/>
+            <rect x="43" y="27.5" width="10" height="7" rx="2" fill="none" stroke="#00ff41" stroke-width="1" opacity="0.7"/>
+            <line x1="37" y1="31" x2="43" y2="31" stroke="#00ff41" stroke-width="1" opacity="0.7"/>
+            <!-- nose -->
+            <path d="M38 35 Q40 39 42 35" stroke="#00cc33" stroke-width="1" fill="none" opacity="0.6"/>
+            <!-- mouth - straight/neutral -->
+            <line x1="35" y1="43" x2="45" y2="43" stroke="#00ff41" stroke-width="1.2" opacity="0.6"/>
+            <!-- ears -->
+            <ellipse cx="23" cy="33" rx="3" ry="4" fill="#1e3a22" stroke="#00ff41" stroke-width="0.6" opacity="0.5"/>
+            <ellipse cx="57" cy="33" rx="3" ry="4" fill="#1e3a22" stroke="#00ff41" stroke-width="0.6" opacity="0.5"/>
+            <!-- collar -->
+            <path d="M26 55 L40 63 L54 55" stroke="#00ff41" stroke-width="1" fill="none" opacity="0.5"/>
+          </svg>
+          <div class="tc-ava-ring"></div>
+        </div>
+        <h4>OMAR HESHAM</h4>
+        <div class="tc-role">PRESIDENT</div>
+      </div>
+
+      <!-- Mohamed Mostafa -->
+      <div class="tc reveal" style="transition-delay:.2s">
+        <div class="tc-ava-wrap">
+          <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" class="tc-svg">
+            <rect width="80" height="80" fill="#010a03"/>
+            <rect x="1" y="1" width="78" height="78" fill="none" stroke="#00ff41" stroke-width="1" opacity="0.4"/>
+            <!-- body with hoodie -->
+            <path d="M16 80 L16 56 Q18 50 30 48 L40 52 L50 48 Q62 50 64 56 L64 80Z" fill="#031508"/>
+            <path d="M16 80 L16 56 Q18 50 30 48 L40 52 L50 48 Q62 50 64 56 L64 80Z" fill="none" stroke="#00ff41" stroke-width="0.8" opacity="0.5"/>
+            <!-- hoodie pocket -->
+            <rect x="30" y="62" width="20" height="8" rx="3" fill="none" stroke="#00ff41" stroke-width="0.7" opacity="0.4"/>
+            <!-- neck -->
+            <rect x="34" y="45" width="12" height="10" rx="2" fill="#1a3a1e"/>
+            <!-- head - taller/narrower -->
+            <ellipse cx="40" cy="32" rx="14" ry="19" fill="#1a3a1e"/>
+            <ellipse cx="40" cy="32" rx="14" ry="19" fill="none" stroke="#00ff41" stroke-width="0.8" opacity="0.5"/>
+            <!-- curly/messy hair -->
+            <ellipse cx="40" cy="15" rx="15" ry="8" fill="#021a06"/>
+            <rect x="25" y="12" width="30" height="10" fill="#021a06"/>
+            <ellipse cx="29" cy="19" rx="5" ry="4" fill="#021a06"/>
+            <ellipse cx="51" cy="18" rx="5" ry="4" fill="#021a06"/>
+            <ellipse cx="40" cy="13" rx="6" ry="4" fill="#021a06"/>
+            <!-- eyes - with intense look -->
+            <ellipse cx="33" cy="31" rx="3" ry="3.2" fill="#010a03"/>
+            <ellipse cx="47" cy="31" rx="3" ry="3.2" fill="#010a03"/>
+            <ellipse cx="33" cy="31" rx="1.4" ry="1.6" fill="#00ff41" opacity="0.95"/>
+            <ellipse cx="47" cy="31" rx="1.4" ry="1.6" fill="#00ff41" opacity="0.95"/>
+            <!-- strong eyebrows -->
+            <rect x="29" y="26.5" width="9" height="2" rx="1" fill="#00ff41" opacity="0.7"/>
+            <rect x="42" y="26.5" width="9" height="2" rx="1" fill="#00ff41" opacity="0.7"/>
+            <!-- nose -->
+            <path d="M38 35 Q40 40 42 35" stroke="#00cc33" stroke-width="1.2" fill="none" opacity="0.7"/>
+            <!-- smirk -->
+            <path d="M35 43 Q41 46 46 43" stroke="#00ff41" stroke-width="1.2" fill="none" opacity="0.7"/>
+            <!-- ears -->
+            <ellipse cx="26" cy="33" rx="3" ry="4" fill="#1a3a1e" stroke="#00ff41" stroke-width="0.6" opacity="0.5"/>
+            <ellipse cx="54" cy="33" rx="3" ry="4" fill="#1a3a1e" stroke="#00ff41" stroke-width="0.6" opacity="0.5"/>
+          </svg>
+          <div class="tc-ava-ring"></div>
+        </div>
+        <h4>MOHAMED MOSTAFA</h4>
+        <div class="tc-role">CTO</div>
+      </div>
+
+      <!-- Youssef Mohamed -->
+      <div class="tc reveal" style="transition-delay:.3s">
+        <div class="tc-ava-wrap">
+          <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" class="tc-svg">
+            <rect width="80" height="80" fill="#010a03"/>
+            <rect x="1" y="1" width="78" height="78" fill="none" stroke="#00ff41" stroke-width="1" opacity="0.4"/>
+            <!-- body with suit -->
+            <path d="M18 80 L18 55 L28 50 L40 58 L52 50 L62 55 L62 80Z" fill="#021508"/>
+            <path d="M18 80 L18 55 L28 50 L40 58 L52 50 L62 55 L62 80Z" fill="none" stroke="#00ff41" stroke-width="0.8" opacity="0.5"/>
+            <!-- tie -->
+            <path d="M38 52 L40 58 L42 52 L41 48 L39 48Z" fill="#00ff41" opacity="0.5"/>
+            <!-- shirt collar points -->
+            <path d="M33 50 L40 56 L47 50" stroke="#00ff41" stroke-width="1" fill="none" opacity="0.6"/>
+            <!-- neck -->
+            <rect x="34" y="44" width="12" height="10" rx="2" fill="#1d3820"/>
+            <!-- head - rounder/younger -->
+            <ellipse cx="40" cy="31" rx="16" ry="17" fill="#1d3820"/>
+            <ellipse cx="40" cy="31" rx="16" ry="17" fill="none" stroke="#00ff41" stroke-width="0.8" opacity="0.5"/>
+            <!-- neat side-parted hair -->
+            <ellipse cx="40" cy="16" rx="16" ry="7" fill="#021a06"/>
+            <rect x="24" y="14" width="32" height="10" fill="#021a06"/>
+            <!-- part line -->
+            <line x1="35" y1="14" x2="35" y2="22" stroke="#010a03" stroke-width="2"/>
+            <!-- eyes - friendly/open -->
+            <ellipse cx="33" cy="30" rx="3.5" ry="3.5" fill="#010a03"/>
+            <ellipse cx="47" cy="30" rx="3.5" ry="3.5" fill="#010a03"/>
+            <ellipse cx="33" cy="30" rx="1.8" ry="1.8" fill="#00ff9d" opacity="0.95"/>
+            <ellipse cx="47" cy="30" rx="1.8" ry="1.8" fill="#00ff9d" opacity="0.95"/>
+            <!-- shine in eyes -->
+            <circle cx="34.5" cy="29" r="0.6" fill="white" opacity="0.6"/>
+            <circle cx="48.5" cy="29" r="0.6" fill="white" opacity="0.6"/>
+            <!-- eyebrows - slightly arched -->
+            <path d="M29 25.5 Q33 24 37 25.5" stroke="#00ff41" stroke-width="1.2" fill="none" opacity="0.65"/>
+            <path d="M43 25.5 Q47 24 51 25.5" stroke="#00ff41" stroke-width="1.2" fill="none" opacity="0.65"/>
+            <!-- nose -->
+            <path d="M38.5 34 Q40 38 41.5 34" stroke="#00cc33" stroke-width="1" fill="none" opacity="0.6"/>
+            <!-- smile -->
+            <path d="M34 41 Q40 47 46 41" stroke="#00ff41" stroke-width="1.3" fill="none" opacity="0.75"/>
+            <!-- ears -->
+            <ellipse cx="24" cy="32" rx="3" ry="4" fill="#1d3820" stroke="#00ff41" stroke-width="0.6" opacity="0.5"/>
+            <ellipse cx="56" cy="32" rx="3" ry="4" fill="#1d3820" stroke="#00ff41" stroke-width="0.6" opacity="0.5"/>
+          </svg>
+          <div class="tc-ava-ring"></div>
+        </div>
+        <h4>YOUSSEF MOHAMED</h4>
+        <div class="tc-role">GEN_MANAGER</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- CTA -->
+<section class="cta" id="contact">
+  <p class="sec-label reveal" style="justify-content:center">ACCESS.REQUEST</p>
+  <h2 class="reveal">INITIALIZE_<br>YOUR_SHIELD</h2>
+  <p class="reveal">Join the waitlist. Get 3 months free when we deploy. No spam — ever.</p>
+  <div class="email-form reveal">
+    <input type="email" id="cta-email" placeholder="agent@yourdomain.com">
+    <button onclick="ctaSubmit()">▶ REQUEST</button>
+  </div>
+  <div class="success-pill" id="cta-ok">[ ACCESS GRANTED · STANDBY FOR LAUNCH COMMS ]</div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="fl">⛨ LIGHTSHIELD</div>
+  <p>© 2026 LightShield Inc. — Brighter Security for Darker Threats</p>
+  <ul class="flinks">
+    <li><a href="#">PRIVACY</a></li>
+    <li><a href="#">TERMS</a></li>
+    <li><a href="mailto:hello@lightshield.com">CONTACT</a></li>
+  </ul>
+</footer>
+
+<script>
+// ── MATRIX CANVAS ──
+const canvas=document.getElementById('matrix-canvas');
+const ctx=canvas.getContext('2d');
+canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;initMatrix()});
+const chars='01アイウエオカキクケコサシスセソタチツテトナニヌネノ<>{}[]|/\\LS:#$%';
+let cols,drops;
+function initMatrix(){
+  cols=Math.floor(canvas.width/20);
+  drops=Array(cols).fill(1);
+}
+initMatrix();
+function drawMatrix(){
+  ctx.fillStyle='rgba(1,10,3,0.05)';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#00ff41';ctx.font='13px Share Tech Mono';
+  drops.forEach((y,i)=>{
+    ctx.fillText(chars[Math.floor(Math.random()*chars.length)],i*20,y*20);
+    if(y*20>canvas.height&&Math.random()>.975)drops[i]=0;
+    drops[i]++;
+  });
+}
+setInterval(drawMatrix,50);
+
+// ── TERMINAL TYPEWRITER ──
+const lines=[
+  {text:'$ lightshield --init',cls:'t-cmd',delay:400},
+  {text:'> Scanning threat vectors...',cls:'t-line',delay:900},
+  {text:'> Password database: CHECKING...',cls:'t-line',delay:1400},
+  {text:'> Dark web exposure: 0 leaks found',cls:'t-ok',delay:1900},
+  {text:'> Phishing filter: ACTIVE',cls:'t-ok',delay:2400},
+  {text:'⚠ Safe browsing: WARNING detected',cls:'t-warn',delay:2900},
+  {text:'> Applying security patch...',cls:'t-line',delay:3400},
+  {text:'✓ Human Risk Score: 92/100',cls:'t-ok',delay:3900},
+  {text:'$ _',cls:'t-cursor-line',delay:4400},
+];
+function runTerminal(){
+  const body=document.getElementById('terminal-body');
+  lines.forEach(({text,cls,delay})=>{
+    setTimeout(()=>{
+      const line=document.createElement('div');
+      line.className=cls;line.textContent=text;
+      body.appendChild(line);body.scrollTop=body.scrollHeight;
+    },delay);
+  });
+}
+setTimeout(runTerminal,600);
+
+// ── TAB SWITCH ──
+function switchTab(id,btn){
+  document.querySelectorAll('.feat-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.feat-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='threats')startFeed();
+  if(id==='family')renderMemberDetail(0);
+}
+
+// ── RISK SCORE ──
+function updateRisk(){
+  const s1=+document.getElementById('s1').value;
+  const s2=+document.getElementById('s2').value;
+  const s3=+document.getElementById('s3').value;
+  const s4=+document.getElementById('s4').value;
+  ['sv1','sv2','sv3','sv4'].forEach((id,i)=>{
+    document.getElementById(id).textContent=[s1,s2,s3,s4][i]+'%';
+  });
+  const score=Math.round((s1+s2+s3+s4)/4);
+  document.getElementById('risk-num').textContent=score;
+  const pct=score/100;
+  const dashoffset=408-(408*pct);
+  document.getElementById('risk-ring').style.strokeDashoffset=dashoffset;
+  const verdict=document.getElementById('risk-verdict');
+  const lbl=document.getElementById('ring-lbl');
+  if(score>=80){
+    verdict.className='risk-verdict rv-good';
+    verdict.textContent='[ STATUS: WELL PROTECTED — MAINTAIN PROTOCOL ]';
+    lbl.textContent='SECURE';
+    document.getElementById('risk-ring').style.stroke='var(--g)';
+  } else if(score>=50){
+    verdict.className='risk-verdict rv-mid';
+    verdict.textContent='[ WARNING: MODERATE EXPOSURE — ACTION REQUIRED ]';
+    lbl.textContent='FAIR';
+    document.getElementById('risk-ring').style.stroke='var(--amber)';
+  } else {
+    verdict.className='risk-verdict rv-bad';
+    verdict.textContent='[ CRITICAL: HIGH RISK — IMMEDIATE RESPONSE NEEDED ]';
+    lbl.textContent='AT_RISK';
+    document.getElementById('risk-ring').style.stroke='var(--red)';
+  }
+}
+
+// ── THREAT FEED ──
+const threats=[
+  {msg:'Phishing link INTERCEPTED',src:'vector:EMAIL',sev:'high',ico:'🎣'},
+  {msg:'Credential stuffing attempt',src:'vector:LOGIN',sev:'high',ico:'🔓'},
+  {msg:'Malicious ad payload blocked',src:'vector:BROWSER',sev:'medium',ico:'⚠️'},
+  {msg:'Weak Wi-Fi encryption detected',src:'vector:NETWORK',sev:'medium',ico:'📶'},
+  {msg:'App requesting covert mic access',src:'vector:MOBILE',sev:'medium',ico:'🎙️'},
+  {msg:'Spam SMS with payload link',src:'vector:SMS',sev:'low',ico:'📱'},
+  {msg:'Password found on dark web',src:'vector:DARKWEB',sev:'high',ico:'💀'},
+  {msg:'Unpatched system vulnerability',src:'vector:DEVICE',sev:'low',ico:'🔄'},
+  {msg:'Fingerprint tracker blocked',src:'vector:BROWSER',sev:'low',ico:'🕵️'},
+  {msg:'Fake banking site flagged',src:'vector:BROWSER',sev:'high',ico:'🏦'},
+];
+let paused=false,blocked=0,detected=0,feedInt=null;
+function ts(){const n=new Date();return n.getHours()+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0')}
+function addThreat(){
+  if(paused)return;
+  const t=threats[Math.floor(Math.random()*threats.length)];
+  const list=document.getElementById('threat-list');
+  const el=document.createElement('div');
+  el.className='ti';
+  el.innerHTML=`<span class="ti-ico">${t.ico}</span><div style="flex:1;min-width:0"><div class="ti-msg">${t.msg}</div><div class="ti-src">${t.src}</div></div><span class="severity sv-${t.sev[0]}">${t.sev.toUpperCase()}</span><span class="ti-t">${ts()}</span>`;
+  list.insertBefore(el,list.firstChild);
+  if(list.children.length>7)list.removeChild(list.lastChild);
+  detected++;
+  if(t.sev!=='low')blocked++;
+  document.getElementById('blocked').textContent=blocked;
+  document.getElementById('detected').textContent=detected;
+}
+function startFeed(){if(feedInt)return;addThreat();feedInt=setInterval(addThreat,2000)}
+function toggleFeed(){
+  paused=!paused;
+  document.getElementById('pbtn').textContent=paused?'▶ RESUME':'⏸ PAUSE';
+}
+
+// ── CHALLENGES ──
+const chData=[{p:2,t:3},{p:3,t:3,done:true},{p:2,t:5},{p:0,t:8}];
+function completeChallenge(el,idx){
+  if(chData[idx].done)return;
+  const d=chData[idx];d.p=Math.min(d.p+1,d.t);
+  document.getElementById('c'+idx).style.width=(d.p/d.t*100)+'%';
+  document.getElementById('c'+idx+'p').textContent=d.p+'/'+d.t;
+  if(d.p>=d.t){d.done=true;const xp=el.querySelector('.ch-xp');if(xp)xp.outerHTML='<span class="ch-done">✓</span>';}
+}
+
+// ── FAMILY ──
+const mData=[
+  {name:'AHMED_SECURITY_DETAIL',risks:[
+    {g:'green',i:'✓',t:'Phishing_resistance',v:'98%'},
+    {g:'green',i:'✓',t:'Password_health',v:'90%'},
+    {g:'amber',i:'!',t:'Safe_browsing',v:'72%'},
+    {g:'red',i:'✗',t:'Data_privacy_leaks',v:'2_FOUND'},
+  ]},
+  {name:'SARA_SECURITY_DETAIL',risks:[
+    {g:'green',i:'✓',t:'Phishing_resistance',v:'80%'},
+    {g:'amber',i:'!',t:'Password_health',v:'65%'},
+    {g:'amber',i:'!',t:'Safe_browsing',v:'70%'},
+    {g:'green',i:'✓',t:'Data_privacy',v:'CLEAN'},
+  ]},
+  {name:'OMAR_SECURITY_DETAIL',risks:[
+    {g:'red',i:'✗',t:'Phishing_clicks',v:'3x_TODAY'},
+    {g:'red',i:'✗',t:'Password_health',v:'12%'},
+    {g:'red',i:'✗',t:'Unsafe_apps',v:'5_FOUND'},
+    {g:'amber',i:'!',t:'Safe_browsing',v:'45%'},
+  ]},
+  {name:'NOUR_SECURITY_DETAIL',risks:[
+    {g:'green',i:'✓',t:'Phishing_resistance',v:'95%'},
+    {g:'green',i:'✓',t:'Safe_browsing',v:'99%'},
+    {g:'green',i:'✓',t:'App_permissions',v:'HEALTHY'},
+    {g:'amber',i:'!',t:'Screen_time',v:'HIGH'},
+  ]},
+];
+function renderMemberDetail(idx){
+  const d=mData[idx];
+  document.getElementById('md-name').textContent=d.name;
+  const colorMap={green:'var(--g)',amber:'var(--amber)',red:'var(--red)'};
+  document.getElementById('md-risks').innerHTML=d.risks.map(r=>`
+    <div class="mdr">
+      <div class="mdr-ico" style="background:rgba(${r.g==='green'?'0,255,65':r.g==='amber'?'255,170,0':'255,34,81'},.1);color:${colorMap[r.g]}">${r.i}</div>
+      <span class="mdr-t">${r.t}</span>
+      <span class="mdr-v" style="color:${colorMap[r.g]}">${r.v}</span>
+    </div>`).join('');
+}
+function selectMember(el,idx){
+  document.querySelectorAll('.mem').forEach(m=>m.classList.remove('sel'));
+  el.classList.add('sel');
+  renderMemberDetail(idx);
+}
+renderMemberDetail(0);
+
+// ── CTA ──
+function ctaSubmit(){
+  const e=document.getElementById('cta-email').value.trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){
+    document.getElementById('cta-email').style.borderColor='var(--red)';return;
+  }
+  const btn=document.querySelector('.email-form button');
+  btn.textContent='SENDING...';btn.disabled=true;
+
+  fetch('/api/join',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({email:e})
+  })
+  .then(r=>r.json())
+  .then(data=>{
+    if(data.ok){
+      document.querySelector('.email-form').style.display='none';
+      document.getElementById('cta-ok').classList.add('show');
+    } else {
+      btn.textContent='▶ REQUEST';btn.disabled=false;
+      alert('Error: '+data.error);
+    }
+  })
+  .catch(()=>{
+    // Fallback: show success anyway (offline mode)
+    document.querySelector('.email-form').style.display='none';
+    document.getElementById('cta-ok').classList.add('show');
+  });
+}
+document.getElementById('cta-email').addEventListener('input',function(){this.style.borderColor=''});
+
+// ── SCROLL REVEAL ──
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}});
+},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
